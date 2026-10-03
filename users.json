@@ -1,0 +1,8 @@
+[
+    {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@admin.com",
+        "password_mock_not_secure": "admin"
+    }
+]

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Honey - T Words</title>
+    <style>
+        body { background-color: pink; font-family: Arial, sans-serif; }
+        .container { text-align: center; padding-top: 50px; max-width: 600px; margin: 0 auto; }
+        #random-word { color: #333; margin-top: 20px; font-size: 3em; min-height: 60px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 5px; margin: 5px; }
+        button:hover { background-color: #e0e0e0; }
+        #record-btn { background-color: #ff6b6b; color: white; border: none; }
+        #record-btn.recording { background-color: #cc0000; animation: pulse 1.5s infinite; }
+        #result-area { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
+        .correct { color: green; }
+        .incorrect { color: red; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <a href="selection.html" style="font-size: 15px;">Back to Selection</a>
+    <h1 style="text-align: center;">Practice 'T' Words</h1>
+    
+    <div class="container">
+        <h2 id="random-word">Click 'Next Word' to start</h2>
+        <div><button onclick="displayRandomWord()">Next Word</button></div>
+        <div style="margin-top: 30px;">
+            <button id="record-btn" onclick="toggleRecording()" disabled>Hold to Record</button>
+            <p id="status-text" style="font-size: 0.9em; color: #666;">Select a word first</p>
+        </div>
+        <div id="result-area"></div>
+    </div>
+
+    <script>
+        const wordList = [
+            "teeth", "tire", "toast", "toy", "teacher", "two", "toad", "tiger", "turkey", "taco", 
+            "tool", "tooth", "toe", "talk", "towel", "turtle", "team", "take", "tall", "taste", 
+            "tub", "touch", "top", "tongue", "time", "button", "guitar", "kitten", "mittens", 
+            "potato", "eighteen", "rotten", "hotel", "cotton", "motel", "beauty", "better", 
+            "city", "butter", "little", "butterfly", "tomato", "biting", "Saturday", "water", 
+            "bat", "boat", "cat", "fruit", "goat", "hat", "coat", "light", "nut", "chocolate", 
+            "eat", "bite", "cut", "cute", "feet", "get", "sit", "right", "not", "late", "kite", 
+            "hot", "hat", "wet", "white", "table", "taken", "talent", "teacher", "teamwork", 
+            "tennis", "Texas", "ticket", "tiny", "tired", "tissue", "toaster", "today", "toilet", 
+            "tonight", "toothpaste", "towel", "T-shirt", "turkey", "turtle", "tablecloth", 
+            "talented", "talkative", "tangerine", "teachable", "teacher's aide", "teddy bear", 
+            "teenager", "telephone", "tennis ball", "tennis court", "tennis shoes", "terrific", 
+            "together", "tomorrow", "tornado", "tortilla", "typical", "table tennis", 
+            "tape recorder", "telephone book", "telephone booth", "telephone pole", "television", 
+            "temperature", "territory", "technicality", "tuberculosis", "batter", "beauty", 
+            "better", "brighter", "Britain", "butter", "button", "cheetah", "daughter", "eating", 
+            "guitar", "heater", "hotel", "hotter", "kitten", "lettuce", "photos", "pretty", 
+            "sweater", "written", "attitude", "beautiful", "bike safety", "bus saftety", 
+            "huttonhole", "computer", "cottage cheese", "excited", "fairy tale", "forgotten", 
+            "hospital", "hot water", "invited", "Jupiter", "photograph", "potato", "Saturday", 
+            "talkative", "tomato", "visitor", "alligator", "baby sitter", "beauty salon", 
+            "boating safety", "calculator", "competitor", "educator", "elevator", "escalator", 
+            "peanut butter", "potato chips", "thermometer", "United States", "vegetables", 
+            "vitamin C", "walking safety", "water safety", "denominator", "deteriorate", 
+            "hippopotamus", "hot water bottle", "hot water heater", "potato salad", "refrigerator", 
+            "saltwater taffy", "about", "basket", "Boy Scout", "bracelet", "closet", "concrete", 
+            "create", "delete", "exit", "flashlight", "forget", "grapefruit", "jacket", "minute", 
+            "parrot", "peanut", "pocket", "quiet", "rabbit", "toilet", "accurate", "alphabet", 
+            "apricot", "astronaut", "calculate", "celebrate", "chocolate", "coconut", "cookie sheet", 
+            "cowboy boot", "educate", "hibernate", "incomplete", "laundromat", "parking lot", 
+            "riverboat", "roller skate", "substitute", "thermostat", "violet", "accelerate", 
+            "accumulate", "cooperate", "Easter basket", "refrigerate", "shopping basket", 
+            "supermarket", "unfortunate"
+        ];
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        function speakText(text) {
+            window.speechSynthesis.cancel(); // Stop any previous speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9; // Optional: Adjust speed
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function displayRandomWord() {
+            const randomIndex = Math.floor(Math.random() * wordList.length);
+            document.getElementById('random-word').textContent = wordList[randomIndex];
+            document.getElementById('record-btn').disabled = false;
+            document.getElementById('record-btn').innerText = "Record Answer";
+            document.getElementById('status-text').innerText = "Press to start recording";
+            document.getElementById('result-area').innerHTML = "";
+        }
+
+        async function toggleRecording() {
+            const recordBtn = document.getElementById('record-btn');
+            const statusText = document.getElementById('status-text');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = sendAudioData;
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('recording');
+                    recordBtn.innerText = "Stop Recording";
+                    statusText.innerText = "Recording...";
+                } catch (err) {
+                    alert("Microphone access denied.");
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordBtn.innerText = "Processing...";
+                recordBtn.disabled = true;
+            }
+        }
+
+        async function sendAudioData() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            formData.append('target_word', document.getElementById('random-word').textContent);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/transcribe', { method: 'POST', body: formData });
+                const data = await response.json();
+                const resultArea = document.getElementById('result-area');
+                
+                if (data.success) {
+                    // Prepare the text to speak
+                    const feedbackText = data.is_correct 
+                        ? `Great job! You said ${data.transcription}` 
+                        : `Try again. I heard ${data.transcription}`;
+
+                    // Update UI
+                    resultArea.innerHTML = data.is_correct 
+                        ? `<span class="correct">${feedbackText}</span>` 
+                        : `<span class="incorrect">${feedbackText}</span>`;
+                    
+                    // --- NEW: Speak the result ---
+                    speakText(feedbackText);
+
+                } else {
+                    resultArea.innerText = "Error: " + (data.error || "Unknown Error");
+                }
+                
+                document.getElementById('record-btn').innerText = "Record Answer";
+                document.getElementById('record-btn').disabled = false;
+                document.getElementById('status-text').innerText = "Ready";
+            } catch (error) {
+                console.error(error);
+                document.getElementById('result-area').innerText = "Server Error";
+                document.getElementById('record-btn').disabled = false;
+            }
+        }
+    </script>

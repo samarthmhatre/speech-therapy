@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up Page</title>
+
+    <style>
+        body {
+            font-family: Didot;
+            background: pink;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .signup-container {
+            background: brown;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            width: 320px;
+        }
+
+        .signup-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .signup-container input[type="text"],
+        .signup-container input[type="email"],
+        .signup-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 16px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* Adjusted button style to match the brown background/pink body scheme better for contrast */
+        .signup-container input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #431105; /* Dark brown for contrast */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px; /* Add space above button */
+        }
+
+        .signup-container input[type="submit"]:hover {
+            background-color: #2c0303;
+        }
+
+        .signup-container .links {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .signup-container .links a {
+            text-decoration: none;
+            color: #431105;
+        }
+
+        .signup-container .links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Added a style for displaying feedback messages */
+        .feedback {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="signup-container">
+        <h2>Sign Up</h2>
+        <form id="signup-form">
+            <label for="fullname">Full Name</label>
+            <input type="text" id="fullname" name="fullname" placeholder="Enter your name" required />
+
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required />
+
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Choose a username" required />
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Create a password" required />
+
+            <label for="confirm-password">Confirm Password</label>
+            <input type="password" id="confirm-password" name="confirm-password" placeholder="Re-enter password" required />
+
+            <div id="feedback-message" class="feedback" style="display: none;"></div>
+            
+            <input type="submit" value="Sign Up" />
+        </form>
+
+        <div class="links">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+    
+    <script>
+        const signupForm = document.getElementById("signup-form");
+        const feedbackDiv = document.getElementById("feedback-message");
+        
+        // Helper function to display messages
+        function displayFeedback(message, isSuccess) {
+            feedbackDiv.textContent = message;
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.className = isSuccess ? 'feedback success' : 'feedback error';
+        }
+
+        signupForm.addEventListener("submit", async function(event) {
+            // Stop the traditional form submission to PHP/HTML action
+            event.preventDefault();
+
+            // 1. Client-Side Validation (can be more complex)
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
+            
+            if (password !== confirmPassword) {
+                displayFeedback("Error: Passwords do not match!", false);
+                return; // Stop the submission
+            }
+
+            // Gather all necessary form data
+            const signupData = {
+                fullname: document.getElementById("fullname").value,
+                email: document.getElementById("email").value,
+                username: document.getElementById("username").value,
+                password: password // Use the validated password
+            };
+
+            // 2. Fetch API call to the Python (Flask) Backend
+            // NOTE: Assumes your Python server is running on http://127.0.0.1:5000
+            try {
+                const response = await fetch('http://127.0.0.1:5000/signup', {
+                    method: 'POST', 
+                    headers: {
+                        // Tell the server we are sending JSON data
+                        'Content-Type': 'application/json' 
+                    },
+                    // Convert the JS object to a JSON string for the body
+                    body: JSON.stringify(signupData) 
+                });
+
+                const result = await response.json(); // Get the JSON response from the server
+
+                if (response.ok) { // Status code 200-299 (e.g., 201 Created)
+                    displayFeedback("Sign Up Successful! Redirecting...", true);
+                    // You can redirect the user here:
+                    // window.location.href = "login.html"; 
+                } else { 
+                    // Status code 4xx or 5xx (e.g., 400 Bad Request, 409 Conflict)
+                    // The server's response.message will contain the error details
+                    displayFeedback("Sign Up Failed: " + result.message, false);
+                }
+            } catch (error) {
+                // This catches network errors (server not running, CORS issues, etc.)
+                console.error("Network or server connection error:", error);
+                displayFeedback("A network error occurred. Is the Python server running?", false);
+            }
+        });
+    </script>
+</body>
+</html>

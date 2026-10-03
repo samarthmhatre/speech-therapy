@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <style>
+        body {
+            font-family: Didot;
+            background: pink;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: brown;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            width: 300px;
+        }
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 16px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .login-container input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #431105; /* Consistent dark brown color */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .login-container input[type="submit"]:hover {
+            background-color: #2c0303;
+        }
+        .login-container .links {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .login-container .links a {
+            text-decoration: none;
+            color: #431105;
+        }
+        .login-container .links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Styles for dynamic feedback */
+        .feedback {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <label for="login-email">Email</label>
+            <input type="text" id="login-email" placeholder="Enter email" required />
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter password" required />
+            
+            <div id="feedback-message" class="feedback" style="display: none;"></div>
+            
+            <input type="submit" value="Login" id="login-btn">
+        </form>
+        <div class="links">
+            <p><a href="#">Forgot password?</a></p>
+            <p><a href="signup.html">Create an account</a></p>
+        </div>
+    </div>
+    
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const feedbackDiv = document.getElementById("feedback-message");
+
+        // Helper function to display messages
+        function displayFeedback(message, isSuccess) {
+            feedbackDiv.textContent = message;
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.className = isSuccess ? 'feedback success' : 'feedback error';
+        }
+
+        loginForm.addEventListener("submit", async function(event) {
+            event.preventDefault(); // Prevent default HTML submission
+
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+            
+            // Clear previous message
+            feedbackDiv.style.display = 'none';
+
+            const loginData = {
+                email: email,
+                password: password
+            };
+
+            // Fetch API call to the Python (Flask) Backend /login endpoint
+            try {
+                const response = await fetch('http://127.0.0.1:5000/login', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const result = await response.json(); // Get the JSON response
+
+                if (response.ok) { // Status code 200-299
+                    displayFeedback("Login Successful! Redirecting...", true);
+                    // Redirect to the success page as intended
+                    window.location.href = "selection.html"; 
+                } else { 
+                    // Status code 4xx or 5xx (e.g., 401 Unauthorized)
+                    displayFeedback("Login Failed: " + result.message, false);
+                }
+            } catch (error) {
+                console.error("Network or server connection error:", error);
+                displayFeedback("A network error occurred. Is the Python server running?", false);
+            }
+        });
+    </script>
+</body>
+</html>
